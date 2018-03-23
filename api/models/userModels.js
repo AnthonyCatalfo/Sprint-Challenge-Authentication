@@ -8,8 +8,25 @@ const UserSchema = Schema({
   // create your user schema here.
   // username: required, unique and lowercase
   // password: required
+  "username": {
+    type:String,
+    required:true,
+    lowercase:true,
+    unique:true
+  },
+  "password": {
+    type:String,
+    required:true,
+  }
 });
-
+UserSchema.pre('save',function(next){                                                                                                                                  
+  bcrypt.hash(this.password, SALT_ROUNDS, (err, hash) => {
+    if (err) return next(err);
+    this.password = hash;
+    next();
+  });
+});
+/*
 UserSchema.pre('save', function(next) {
   // https://github.com/kelektiv/node.bcrypt.js#usage
   // Fill this middleware in with the Proper password encrypting, bcrypt.hash()
@@ -22,9 +39,19 @@ UserSchema.methods.checkPassword = function(plainTextPW, callBack) {
   // Fill this method in with the Proper password comparing, bcrypt.compare()
   // Your controller will be responsible for sending the information here for password comparison
   // Once you have the user, you'll need to pass the encrypted pw and the plaintext pw to the compare function
+
 };
+*/
 
 // if you're really stuck with this at this point, you can reference this document.
 // https://github.com/LambdaSchool/Auth-JWT/blob/master/models/index.js This is what we're going for here.
+
+UserSchema.methods.checkPassword = function(potentialPassword, cb) {
+  // check passwords
+  bcrypt.compare(potentialPassword, this.password, (err, isMatch) => {
+    if (err) return cb(err);
+    cb(null, isMatch);
+  });
+};
 
 module.exports = mongoose.model('User', UserSchema);
